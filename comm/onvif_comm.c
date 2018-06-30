@@ -1,9 +1,8 @@
 /************************************************************************
 **
-** 作者：许振坪
-** 日期：2017-05-03
-** 博客：http://blog.csdn.net/benkaoya
-** 描述：IPC示例代码公共函数
+** 作者：梁友
+** 日期：2018-06-28
+** 描述：ONVIF封装函数
 **
 ************************************************************************/
 #include <stdio.h>
@@ -305,6 +304,11 @@ int ONVIF_GetCapabilities(const char *DeviceXAddr, struct tagCapabilities *capa)
                 strncpy(capa->EventXAddr, rep.Capabilities->Events->XAddr, sizeof(capa->EventXAddr) - 1);
             }
         }
+        if (NULL != rep.Capabilities->PTZ) {
+            if (NULL != rep.Capabilities->PTZ->XAddr) {
+                strncpy(capa->PTZXAddr, rep.Capabilities->PTZ->XAddr, sizeof(capa->PTZXAddr) - 1);
+            }
+        }
     }
 
 EXIT:
@@ -314,6 +318,178 @@ EXIT:
     }
 
     return result;
+}
+
+/************************************************************************
+**函数：ONVIF_PTZ_ContinuousMove
+**功能：使设备按照设置的PTZ速度持续移动
+**参数：
+        [in] profile    - MediaProfile的引用 
+        [in] endpoint   - 设备服务地址
+        [in] speed_Pan  - 水平移动速度, 取值范围(-100, +100)
+        [in] speed_Tilt - 倾斜的移动速度, 取值范围(-100, +100)
+        [in] speed_Zoom - 焦距的移动速度, 取值范围(-100, +100) 
+**返回：
+        0表明成功，非0表明失败
+**备注：
+		1) 焦距值越大， 视野角度越小， 焦距值越小， 视野角度越大
+		2) 设备的移动速度与焦距有关， 焦距越近速度越慢	
+		3) 速度的三个参数， PAN 正值代表顺时针转动， 负值代表逆时针转动
+		                    Tilt 正值代表向上移动， 负值代表向下移动 
+							Zoom 正值代表焦距变大， 负值达标焦距变小
+************************************************************************/
+
+int ONVIF_PTZ_ContinuousMove(char *profile, char *endpoint, int speed_Pan, int speed_Tilt, int speed_Zoom)
+{
+	struct _tptz__ContinuousMove 	 			continuousMove;
+	struct _tptz__ContinuousMoveResponse 		continuousMoveresponse;
+    struct soap *soap = NULL;
+	int result = 0;
+
+    SOAP_ASSERT(NULL != profile);
+    SOAP_ASSERT(NULL != endpoint);
+    SOAP_ASSERT(speed_Pan <= 100 && speed_Pan >= -100);
+    SOAP_ASSERT(speed_Tilt <= 100 && speed_Tilt >= -100);
+    SOAP_ASSERT(speed_Zoom <= 100 && speed_Zoom >= -100);
+    SOAP_ASSERT(NULL != (soap = ONVIF_soap_new(SOAP_SOCK_TIMEOUT)));
+
+    memset(&continuousMove, 0x00, sizeof(continuousMove));
+    memset(&continuousMoveresponse, 0x00, sizeof(continuousMoveresponse));
+
+    ONVIF_SetAuthInfo(soap, USERNAME, PASSWORD);
+
+	struct tt__PTZSpeed* velocity = soap_new_tt__PTZSpeed(soap, -1);
+    SOAP_ASSERT(NULL != velocity);
+	continuousMove.Velocity = velocity;
+
+	struct tt__Vector2D* panTilt = soap_new_tt__Vector2D(soap, -1);
+    SOAP_ASSERT(NULL != panTilt);
+	continuousMove.Velocity->PanTilt = panTilt;
+
+	struct tt__Vector1D* zoom = soap_new_tt__Vector1D(soap, -1);
+    SOAP_ASSERT(NULL != zoom);
+	continuousMove.Velocity->Zoom = zoom;
+
+	continuousMove.ProfileToken = profile;
+	continuousMove.Velocity->Zoom->x = (float)speed_Zoom / 100;
+	continuousMove.Velocity->PanTilt->x = (float)speed_Pan / 100;
+	continuousMove.Velocity->PanTilt->y = (float)speed_Tilt / 100;
+	continuousMove.Velocity->PanTilt->space = "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace";
+
+	result = soap_call___tptz__ContinuousMove(soap, endpoint, NULL, &continuousMove, &continuousMoveresponse);
+	SOAP_CHECK_ERROR(result, soap, "soap_call___tptz__ContinuousMove");
+
+EXIT:
+    if (NULL != soap) {
+        ONVIF_soap_delete(soap);
+    }
+
+    return result;
+}
+
+/************************************************************************
+**函数：ONVIF_PTZ_Stop
+**功能：使设备停止移动
+**参数：
+        [in] profile    - MediaProfile的引用 
+        [in] endpoint   - 设备服务地址
+**返回：
+        0表明成功，非0表明失败
+**备注：
+		无
+************************************************************************/
+int ONVIF_PTZ_Stop(char *profile, char *endpoint)
+{
+	struct _tptz__Stop 							stop;
+	struct _tptz__StopResponse 					stopresponse;
+    struct soap *soap = NULL;
+	int result = 0;
+
+    SOAP_ASSERT(NULL != profile);
+    SOAP_ASSERT(NULL != endpoint);
+    SOAP_ASSERT(NULL != (soap = ONVIF_soap_new(SOAP_SOCK_TIMEOUT)));
+
+	memset(&stop, 0, sizeof (stop));
+	memset(&stopresponse, 0, sizeof (stopresponse));
+
+    ONVIF_SetAuthInfo(soap, USERNAME, PASSWORD);
+
+	stop.ProfileToken = profile;
+	enum xsd__boolean *PT_boolean = soap_new_xsd__boolean(soap, -1);
+	enum xsd__boolean *Z_boolean = soap_new_xsd__boolean(soap, -1);
+	*PT_boolean = xsd__boolean__true_;
+	*Z_boolean = xsd__boolean__true_;
+	stop.PanTilt = PT_boolean;
+	stop.Zoom = Z_boolean;
+
+	result = soap_call___tptz__Stop(soap, endpoint, NULL, &stop, &stopresponse);
+	SOAP_CHECK_ERROR(result, soap, "soap_call__tptz__Stop");
+
+EXIT:
+	if (NULL != soap) {
+		ONVIF_soap_delete(soap);
+	}
+
+	return result;
+}
+
+/************************************************************************
+**函数：ONVIF_PTZ_GotoHomePosition
+**功能：使设备停止移动
+**参数：
+        [in] profile    - MediaProfile的引用 
+        [in] endpoint   - 设备服务地址
+**返回：
+        0表明成功，非0表明失败
+**备注：
+		无
+************************************************************************/
+int ONVIF_PTZ_GotoHomePosition(char *profile, char *endpoint, int speed_Pan, int speed_Tilt, int speed_Zoom)
+{
+    struct soap *soap = NULL;
+	int result = 0;
+	struct _tptz__GotoHomePosition			tptz__GotoHomePosition; 
+	struct _tptz__GotoHomePositionResponse  tptz__GotoHomePositionResponse;
+
+    SOAP_ASSERT(NULL != profile);
+    SOAP_ASSERT(NULL != endpoint);
+    SOAP_ASSERT(speed_Pan <= 100 && speed_Pan >= -100);
+    SOAP_ASSERT(speed_Tilt <= 100 && speed_Tilt >= -100);
+    SOAP_ASSERT(speed_Zoom <= 100 && speed_Zoom >= -100);
+    SOAP_ASSERT(NULL != (soap = ONVIF_soap_new(SOAP_SOCK_TIMEOUT)));
+	
+	memset(&tptz__GotoHomePosition, 0, sizeof (tptz__GotoHomePosition));
+	memset(&tptz__GotoHomePositionResponse, 0, sizeof (tptz__GotoHomePositionResponse));
+
+    ONVIF_SetAuthInfo(soap, USERNAME, PASSWORD);
+
+	struct tt__PTZSpeed* velocity = soap_new_tt__PTZSpeed(soap, -1);
+    SOAP_ASSERT(NULL != velocity);
+	tptz__GotoHomePosition.Speed = velocity;
+
+	struct tt__Vector2D* panTilt = soap_new_tt__Vector2D(soap, -1);
+    SOAP_ASSERT(NULL != panTilt);
+	tptz__GotoHomePosition.Speed->PanTilt = panTilt;
+
+	struct tt__Vector1D* zoom = soap_new_tt__Vector1D(soap, -1);
+    SOAP_ASSERT(NULL != zoom);
+	tptz__GotoHomePosition.Speed->Zoom = zoom;
+
+	tptz__GotoHomePosition.ProfileToken = profile;
+	tptz__GotoHomePosition.Speed->Zoom->x = (float)speed_Zoom / 100;
+	tptz__GotoHomePosition.Speed->PanTilt->x = (float)speed_Pan / 100;
+	tptz__GotoHomePosition.Speed->PanTilt->y = (float)speed_Tilt / 100;
+	tptz__GotoHomePosition.Speed->PanTilt->space = "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace";
+
+	result = soap_call___tptz__GotoHomePosition(soap, endpoint, NULL, &tptz__GotoHomePosition, &tptz__GotoHomePositionResponse);
+	SOAP_CHECK_ERROR(result, soap, "soap_call___tptz__GotoHomePosition");
+
+EXIT:
+	if (NULL != soap) {
+		ONVIF_soap_delete(soap);
+	}
+
+	return result;
 }
 
 /************************************************************************

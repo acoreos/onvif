@@ -63,6 +63,7 @@ struct tagProfile {
 struct tagCapabilities {
     char MediaXAddr[ONVIF_ADDRESS_SIZE];                                        // 媒体服务地址
     char EventXAddr[ONVIF_ADDRESS_SIZE];                                        // 事件服务地址
+	char PTZXAddr[ONVIF_ADDRESS_SIZE];											// PTZ服务地址
                                                                                 // 其他服务器地址就不列出了
 };
 
