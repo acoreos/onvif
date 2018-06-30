@@ -67,9 +67,9 @@ LDLIBS += -L$(OPENSSL_DIR)                      \
           -lz                                        \
 
 # 共享库链接ffmpeg
-#LDLIBS += -L$(FFMPEG_DIR)/lib                       \
-#          -lavcodec -lavdevice -lavfilter -lavformat\
-#          -lavutil -lswresample -lswscale           \
+LDLIBS += -L$(FFMPEG_DIR)/lib                       \
+          -lavcodec -lavdevice -lavfilter -lavformat\
+          -lavutil -lswresample -lswscale           \
 
 # 链接库(其他)
 LDLIBS += -lpthread

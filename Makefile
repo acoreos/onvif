@@ -4,7 +4,7 @@
 # (The library directory is first so that the library gets built first)
 #
 
-DIRS = ptz
+DIRS = h264
 #DIRS = discovery \
        deviceinfo \
        systemtime \
