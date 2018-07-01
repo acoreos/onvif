@@ -1,0 +1,14 @@
+prefix=/home/ffmpeg-linux-pc-3.2
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 57.64.100
+Requires: 
+Requires.private: libswresample >= 2.3.100, libavutil >= 55.34.100
+Conflicts:
+Libs: -L${libdir}  -lavcodec 
+Libs.private: -ldl -lxcb -lxcb-shm -lxcb-xfixes -lxcb-shape -lX11 -lm -llzma -lz -pthread
+Cflags: -I${includedir}

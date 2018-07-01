@@ -1,10 +1,13 @@
 SHELL = /bin/bash
 
-CC           := gcc
-CPP          := g++
-LD           := ld
-AR           := ar
-STRIP        := strip
+ARCH		:= arm-
+CROSS_COMPILE=/home/millet/software/toolchain/arm/usr/bin/arm-linux-
+
+CC           := ${CROSS_COMPILE}gcc
+CPP          := ${CROSS_COMPILE}g++
+LD           := ${CROSS_COMPILE}ld
+AR           := ${CROSS_COMPILE}ar
+STRIP        := ${CROSS_COMPILE}strip
 
 # -DWITH_DOM -DWITH_OPENSSL两个宏是链接openssl时要用的；
 # -D__STDC_CONSTANT_MACROS宏是cpp源码调用ffmpeg库接口函数时要用的，如果是c源码调用ffmpeg库函数接口就不用这个宏；
@@ -13,10 +16,10 @@ CFLAGS += -c -g -Wall -DWITH_DOM -DWITH_OPENSSL
 CFLAGS += $(INCLUDE)
 
 # openssl目录名
-OPENSSL_DIR = ../openssl-linux-pc
+OPENSSL_DIR = ../lib/${ARCH}openssl-linux
 
 # ffmpeg目录名
-FFMPEG_DIR = ../ffmpeg-linux-pc
+FFMPEG_DIR = ../lib/${ARCH}ffmpeg-linux-3.2
 
 # 源文件
 SOURCES_ONVIF += \

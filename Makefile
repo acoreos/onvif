@@ -7,11 +7,9 @@
 DIRS = h264
 #DIRS = discovery \
        deviceinfo \
-       systemtime \
        capabilities \
        avstream \
-       snapshot \
-       SetResolution \
+	   h264 \
 
 # Dummy targets for building and clobbering everything in all subdirectories
 
