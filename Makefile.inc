@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 ARCH		:= arm-
-CROSS_COMPILE=/home/millet/software/toolchain/arm/usr/bin/arm-linux-
+CROSS_COMPILE=/home/millet/software/toolchain/arm/4.8.5/usr/bin/arm-linux-
 
 CC           := ${CROSS_COMPILE}gcc
 CPP          := ${CROSS_COMPILE}g++

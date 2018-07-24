@@ -1,8 +1,7 @@
 /************************************************************************
 **
-** 作者：许振坪
-** 日期：2017-05-03
-** 博客：http://blog.csdn.net/benkaoya
+** 作者：梁友
+** 日期：2018-07-02
 ** 描述：读取IPC音视频流数据示例代码
 **
 ************************************************************************/
@@ -97,7 +96,7 @@ void open_rtsp(char *rtsp)
 
 	pkt = (AVPacket *)av_malloc(sizeof(AVPacket));
 
-	FILE *file = fopen("./video.h264", "ab");
+	FILE *file = fopen("/home/ftp/video.h264", "ab");
 	if (file == NULL) {
 		printf("fopen ./video.h264 err!\n");
 		goto EXIT;
@@ -115,7 +114,7 @@ void open_rtsp(char *rtsp)
         }
 
         if (pkt->stream_index == video_st_index) {                               // video frame
-            printf("Video Packet size = %d\n", pkt->size);
+            //printf("Video Packet size = %d\n", pkt->size);
 			fwrite(pkt->data, 1, pkt->size, file);
         } else if(pkt->stream_index == audio_st_index) {                         // audio frame
             //printf("Audio Packet size = %d\n", pkt->size);

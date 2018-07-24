@@ -41,9 +41,9 @@ void cb_discovery(char *DeviceXAddr)
     struct tagCapabilities capa;
     struct tagProfile *profiles = NULL;                                         // 设备配置文件列表
 	int result = 0;
-	int speed_p = 100;
-	int speed_t = 100;
-	int speed_z = 10;
+	int speed_p = 80;
+	int speed_t = -100;
+	int speed_z = 0;
 
     ONVIF_GetCapabilities(DeviceXAddr, &capa);
 
@@ -51,7 +51,8 @@ void cb_discovery(char *DeviceXAddr)
 	//if (ONVIF_PTZ_ContinuousMove(profiles->token, capa.PTZXAddr, speed_p, speed_t, speed_z) != 0)
 	//  return -1;
 
-	//sleep(1);
+	ONVIF_PTZ_AbsoluteMove(profiles->token, capa.PTZXAddr, speed_p, speed_t, speed_z);
+	sleep(5);
 
 	//ONVIF_PTZ_Stop(profiles->token, capa.PTZXAddr);
 	
